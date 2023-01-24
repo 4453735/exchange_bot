@@ -1,10 +1,18 @@
 import axios from 'axios';
 import { Telegraf } from 'telegraf';
 import {BOT_TOKEN} from "./AppConfig";
-import {getDollar, getLira} from "./api";
+import {getDollar, getDollar2, getLira, getLira2} from "./api";
+import { Job, scheduleJob } from "node-schedule";
 
 
 const bot = new Telegraf(BOT_TOKEN);
+
+let counter = 0;
+let job: Job;
+
+const stopJob = () => {
+    job.cancel();
+}
 
 bot.start((ctx) => {
     ctx.reply('Hello!!!');
@@ -55,10 +63,23 @@ bot.command('getLira', async (ctx) => {
     ctx.reply(`Курс Турецкой лиры: ${response} RUB`);
 });
 
-// bot.command('getDollar2', async (ctx) => {
-//     await getDollar2();
-//
-//     // ctx.reply()
-// })
+bot.command('getDollar2', async (ctx) => {
+    const response = await getDollar2();
+
+    ctx.reply(`${response}`);
+})
+
+bot.command('job', async (ctx) => {
+    job = scheduleJob('*/5 * * * * *', async () => {
+        const response = await getLira2();
+        console.log(response);
+        ctx.reply(`${response}`);
+    });
+});
+
+bot.command('stop', async (ctx) => {
+    stopJob();
+})
+
 
 bot.launch();
