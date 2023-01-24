@@ -2,17 +2,16 @@ import axios from 'axios';
 import { Telegraf } from 'telegraf';
 import {BOT_TOKEN} from "./AppConfig";
 import {getDollar, getDollar2, getLira, getLira2} from "./api";
-import { Job, scheduleJob } from "node-schedule";
+import { Job, scheduleJob, gracefulShutdown } from "node-schedule";
+import {startWatchingCurrency, stopWatchingCurrency} from "./jobs/watchCurrency";
 
 
 const bot = new Telegraf(BOT_TOKEN);
 
 let counter = 0;
-let job: Job;
 
-const stopJob = () => {
-    job.cancel();
-}
+
+
 
 bot.start((ctx) => {
     ctx.reply('Hello!!!');
@@ -70,16 +69,22 @@ bot.command('getDollar2', async (ctx) => {
 })
 
 bot.command('job', async (ctx) => {
-    job = scheduleJob('*/5 * * * * *', async () => {
-        const response = await getLira2();
-        console.log(response);
-        ctx.reply(`${response}`);
-    });
+    startWatchingCurrency(ctx);
 });
 
 bot.command('stop', async (ctx) => {
-    stopJob();
+    stopWatchingCurrency(ctx);
 })
 
 
 bot.launch();
+
+// Enable graceful stop
+process.once('SIGINT', () => {
+    gracefulShutdown();
+    bot.stop('SIGINT');
+});
+process.once('SIGTERM', () => {
+    gracefulShutdown();
+    bot.stop('SIGTERM');
+});
