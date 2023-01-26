@@ -9,7 +9,7 @@ export const startWatchingCurrency = async (ctx: Context) => {
     ctx.reply(`10 TRY = ${response} RUB`);
     let responseOld = response;
     let counter = 0;
-    job = scheduleJob('* * */3 * * *', async () => {
+    job = scheduleJob('***/3***', async () => {
         const response = await getLira2();
         if (response > responseOld) {
             ctx.reply(`10 TRY = ${response} RUB`);
